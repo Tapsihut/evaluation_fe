@@ -1,614 +1,168 @@
-import axios from "axios"
-import { useAuthStore } from "@/stores/auth"
-import { useToast } from "vue-toastification"
+// resources/js/services/apiService.js
+import axios from "axios";
+import { useAuthStore } from "@/stores/auth";
+import { useToast } from "vue-toastification";
 
 const toast = useToast();
 
+// ✅ Base Axios instance
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL, // ✅ dynamic from env
+    baseURL: import.meta.env.VITE_API_URL,
     timeout: 10000,
-})
+});
 
+// 🧩 Request Interceptor — attach token
 api.interceptors.request.use(
     (config) => {
-        const auth = useAuthStore()
-        const token = auth?.token || localStorage.getItem("token")
-
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
-        }
-        return config
+        const auth = useAuthStore();
+        const token = auth?.token || localStorage.getItem("token");
+        if (token) config.headers.Authorization = `Bearer ${token}`;
+        return config;
     },
     (error) => Promise.reject(error)
-)
+);
 
+// 🚨 Response Interceptor — handle session/logout
 api.interceptors.response.use(
     (response) => response,
     (error) => {
+        const auth = useAuthStore();
+
         if (error.response?.status === 401) {
-            const auth = useAuthStore()
-            toast.error("Session expired. Redirecting to landing page...")
+            toast.error("Session expired. Redirecting to landing page...");
             setTimeout(() => {
-                auth.logout()
-                window.location.href = "/" // redirect to landing
-            }, 2000) // slight delay to show toast
+                auth.logout();
+                window.location.href = "/";
+            }, 2000);
         }
+
         if (error.response?.status === 409) {
-            const auth = useAuthStore()
-            toast.error("Your account has been deactivated. Please contact the administrator...")
+            toast.error("Your account has been deactivated. Please contact the administrator...");
             setTimeout(() => {
-                auth.logout()
-                window.location.href = "/" // redirect to landing
-            }, 2000) // slight delay to show toast
+                auth.logout();
+                window.location.href = "/";
+            }, 2000);
         }
-        return Promise.reject(error)
+
+        return Promise.reject(error);
     }
-)
+);
 
-export const fetchUsers = async () => {
-    try {
-        const response = await api.get('/api/users');
-        console.log('Fetched users:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        throw error;
-    }
-};
+// =====================================================
+// 👤 USER MANAGEMENT
+// =====================================================
+export const fetchUsers = async () => api.get('/api/users').then(r => r.data);
+export const fetchMyInfo = async () => api.get('/api/me').then(r => r.data);
 
-export const fetchMyInfo = async () => {
-    try {
-        const response = await api.get('/api/me');
-        console.log('Fetched my info:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching my info:', error);
-        throw error;
-    }
-};
+export const fetchUserOtherInfo = async () => api.get('/api/users/other-info').then(r => r.data);
+export const saveUpdateUserOtherInfo = async (user) =>
+    api.post('/api/users/other-info', user).then(r => r.data);
+export const saveUpdateUsers = async (user) =>
+    api.post(`/api/users/update/${user.id}`, user).then(r => r.data);
+export const toggleActiveUser = async (user) =>
+    api.patch(`/api/users/${user}/toggle-active`).then(r => r.data);
 
+// =====================================================
+// 📜 TOR MANAGEMENT
+// =====================================================
+export const fetchAllTors = async () => api.get('/api/tor').then(r => r.data);
+export const fetchMyTors = async () => api.get('/api/fetchMyTors').then(r => r.data);
 
-export const fetchUserOtherInfo = async () => {
-    try {
-        const response = await api.get('/api/users/other-info');
-        console.log('Fetched users:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        throw error;
-    }
-};
-
-export const saveUpdateUserOtherInfo = async (user) => {
-    try {
-        const response = await api.post('/api/users/other-info', user);
-        console.log('Fetched users other info:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error saving users other info:', error);
-        throw error;
-    }
-};
-
-
-export const saveUpdateUsers = async (user) => {
-    try {
-        const response = await api.post(`/api/users/update/${user.id}`, user);
-        console.log('Fetched users other info:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error saving users other info:', error);
-        throw error;
-    }
-};
-
-export const toggleActiveUser = async (user) => {
-    try {
-        const response = await api.patch(`/api/users/${user}/toggle-active`);
-        console.log('Fetched users toggle active:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error users toggle active:', error);
-        throw error;
-    }
-};
-
-
-// TOR Management APIs
-
-
-//
-// 📄 Fetch all TORs (admin only)
-//
-export const fetchAllTors = async () => {
-    try {
-        const response = await api.get('/api/tor')
-        console.log('Fetched TORs:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error fetching TORs:', error)
-        throw error
-    }
-}
-
-export const fetchMyTors = async () => {
-    try {
-        const response = await api.get('/api/fetchMyTors')
-        console.log('Fetched my TORs:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error fetching my TORs:', error)
-        throw error
-    }
-}
-
-//
-// 📤 Upload a new TOR
-//
 export const uploadTor = async (file, curriculum_id) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post(`/api/tor/upload/${curriculum_id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 1200000,
+    });
+    return response.data;
+};
 
-    try {
-        const formData = new FormData()
-        formData.append('file', file)
-        const response = await api.post(`/api/tor/upload/${curriculum_id}`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-            timeout: 1200000 // ⏳ 120 seconds for OCR requests
-        })
+export const fetchTor = async (id) => api.get(`/api/tor/${id}`).then(r => r.data);
+export const updateTor = async (id, payload) => api.put(`/api/tor/${id}`, payload).then(r => r.data);
+export const deleteTor = async (id) => api.delete(`/api/tor/${id}`).then(r => r.data);
 
-        console.log('Uploaded TOR:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error uploading TOR:', error)
-        throw error
-    }
-}
+export const approveTor = async (payload) => api.post('/api/tors/approve', payload).then(r => r.data);
+export const rejectTor = async (id) => api.post(`/api/tors/reject/${id}`).then(r => r.data);
+export const computeRemainingYears = async (torId, curriculumId) =>
+    api.get(`/api/tor/approve/compute-remaining/${torId}/${curriculumId}`).then(r => r.data);
 
-//
-// 🔍 Get a specific TOR by ID
-//
-export const fetchTor = async (id) => {
-    try {
-        const response = await api.get(`/api/tor/${id}`)
-        return response.data
-    } catch (error) {
-        console.error(`Error fetching TOR ${id}:`, error)
-        throw error
-    }
-}
+// =====================================================
+// 🧾 ADVISING MANAGEMENT
+// =====================================================
+export const saveAdvising = async (payload) =>
+    api.post('/api/advising', {
+        tor_id: payload.tor_id,
+        advising: payload.advising,
+        ocr_records: payload.ocr_records,
+    }).then(r => r.data);
 
-//
-// ✏️ Update TOR status or remarks (admin only)
-//
-export const updateTor = async (id, payload) => {
-    try {
-        const response = await api.put(`/api/tor/${id}`, payload)
-        console.log('Updated TOR:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error updating TOR:', error)
-        throw error
-    }
-}
+export const fetchAdvising = async (torId) => api.get(`/api/advising/${torId}`).then(r => r.data);
+export const newAdvising = async (curriculum_id) =>
+    api.post(`/api/new-student/advising`, { curriculum_id }).then(r => r.data);
 
-//
-// ❌ Delete a TOR (user/admin)
-//
-export const deleteTor = async (id) => {
-    try {
-        const response = await api.delete(`/api/tor/${id}`)
-        console.log('Deleted TOR:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error deleting TOR:', error)
-        throw error
-    }
-}
+// =====================================================
+// 🎓 COURSE MANAGEMENT
+// =====================================================
+export const fetchAllCourses = async () => api.get('/api/courses').then(r => r.data);
+export const createCourse = async (courseData) => api.post('/api/courses', courseData).then(r => r.data);
+export const updateCourse = async (id, courseData) => api.put(`/api/courses/${id}`, courseData).then(r => r.data);
+export const deleteCourse = async (id) => api.delete(`/api/courses/${id}`).then(r => r.data);
 
-// approveTorawait axios.post('/api/tor/approve', payload)
-export const approveTor = async (payload) => {
-    try {
-        const response = await api.post('/api/tors/approve', payload)
-        console.log('Tor approved:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error approving TOR:', error)
-        throw error
-    }
-}
+// =====================================================
+// 📚 CURRICULUM MANAGEMENT
+// =====================================================
+export const fetchAllCurriculums = async () => api.get('/api/curriculums').then(r => r.data);
+export const createCurriculum = async (data) => api.post('/api/curriculums', data).then(r => r.data);
+export const updateCurriculum = async (id, data) => api.put(`/api/curriculums/${id}`, data).then(r => r.data);
+export const deleteCurriculum = async (id) => api.delete(`/api/curriculums/${id}`).then(r => r.data);
+export const fetchCurriculumsByCourse = async (courseId) =>
+    api.get(`/api/curriculums/course/${courseId}`).then(r => r.data);
 
-// approveTorawait axios.post('/api/tor/approve', payload)
-export const rejectTor = async (id) => {
-    try {
-        const response = await api.post(`/api/tors/reject/${id}`)
-        console.log('Tor rejected:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error rejecting TOR:', error)
-        throw error
-    }
-}
+// =====================================================
+// 📘 SUBJECT MANAGEMENT
+// =====================================================
+export const fetchAllSubjects = async () => api.get('/api/subjects').then(r => r.data);
+export const fetchSubjectsByCurriculum = async (curriculumId) =>
+    api.get(`/api/curriculums/${curriculumId}/subjects`).then(r => r.data);
+export const createSubject = async (data) => api.post('/api/subjects', data).then(r => r.data);
+export const updateSubject = async (id, data) => api.put(`/api/subjects/${id}`, data).then(r => r.data);
+export const deleteSubject = async (id) => api.delete(`/api/subjects/${id}`).then(r => r.data);
+export const fetchSubjectPrerequisites = async (id) =>
+    api.get(`/api/subjects/${id}/prerequisites`).then(r => r.data);
 
-// approveTorawait axios.post('/api/tor/approve', payload)
-export const computeRemainingYears = async (torId, curriculumId) => {
-    try {
-        const response = await api.get(`/api/tor/approve/compute-remaining/${torId}/${curriculumId}`)
-        console.log('Remaining years:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error fetching remaining years:', error)
-        throw error
-    }
-}
+// =====================================================
+// 🧮 GRADES MANAGEMENT
+// =====================================================
+export const saveGrades = async (id, grades) =>
+    api.post(`/api/grades`, { tor_id: id, grades }, { timeout: 120000 }).then(r => r.data);
 
+// =====================================================
+// 🧠 OCR / TESSERACT PROCESSING
+// =====================================================
+export const Tesseract = async (id, curriculum_id) =>
+    api.post(`/api/process-tor/${id}/${curriculum_id}`, {}, { timeout: 0 }).then(r => r.data);
 
+// =====================================================
+// 🔔 NOTIFICATIONS
+// =====================================================
+export const fetchAllNotifications = async () => api.get('/api/notifications').then(r => r.data);
+export const fetchUnreadNotifications = async () => api.get('/api/notifications/unread').then(r => r.data);
+export const markNotificationAsRead = async (id) => api.post(`/api/notifications/${id}/read`).then(r => r.data);
+export const markAllNotificationsAsRead = async () => api.post('/api/notifications/read-all').then(r => r.data);
 
-// advising related
-// 💾 Save advising
-// 🧾 Advising related
-export const saveAdvising = async (payload) => {
-    try {
-        const response = await api.post('/api/advising', {
-            tor_id: payload.tor_id,
-            advising: payload.advising,
-            ocr_records: payload.ocr_records
-        })
-        console.log('✅ Saved Advising:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('❌ Error saving advising:', error.response?.data || error)
-        throw error
-    }
+// =====================================================
+// 📊 REPORTS / SUMMARIES
+// =====================================================
+export const fetchStudentSummary = async () => api.get(`/api/student/summary`).then(r => r.data);
+export const fetchAdminSummary = async () => api.get(`/api/admin/summary`).then(r => r.data);
+
+// ✅ Fetch subjects by course code
+export async function fetchSubjectsByCourse(courseCode) {
+  const response = await api.get(`/api/subjects/course/${courseCode}`);
+  console.log("API response:", response.data);
+  return response.data.subjects || [];
 }
 
 
-// 📖 Get advising by TOR ID
-export const fetchAdvising = async (torId) => {
-    try {
-        const response = await api.get(`/api/advising/${torId}`)
-        console.log('Fetched Advising:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error fetching advising:', error)
-        throw error
-    }
-}
-
-
-
-/**
- * Fetch all courses
- */
-export const fetchAllCourses = async () => {
-    try {
-        const response = await api.get('/api/courses')
-        console.log('Fetched Courses:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error fetching courses:', error)
-        throw error
-    }
-}
-
-/**
- * Create a new course
- */
-export const createCourse = async (courseData) => {
-    try {
-        const response = await api.post('/api/courses', courseData)
-        console.log('Created Course:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error creating course:', error)
-        throw error
-    }
-}
-
-/**
- * Update a course by ID
- */
-export const updateCourse = async (id, courseData) => {
-    try {
-        const response = await api.put(`/api/courses/${id}`, courseData)
-        console.log('Updated Course:', response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error updating course ID ${id}:`, error)
-        throw error
-    }
-}
-
-/**
- * Delete a course by ID
- */
-export const deleteCourse = async (id) => {
-    try {
-        const response = await api.delete(`/api/courses/${id}`)
-        console.log('Deleted Course:', response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error deleting course ID ${id}:`, error)
-        throw error
-    }
-}
-
-
-/**
- * Fetch all curriculums
- */
-export const fetchAllCurriculums = async () => {
-    try {
-        const response = await api.get('/api/curriculums')
-        console.log('Fetched Curriculums:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error fetching curriculums:', error)
-        throw error
-    }
-}
-
-/**
- * Create a new curriculum
- */
-export const createCurriculum = async (curriculumData) => {
-    try {
-        const response = await api.post('/api/curriculums', curriculumData)
-        console.log('Created Curriculum:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error creating curriculum:', error)
-        throw error
-    }
-}
-
-/**
- * Update an existing curriculum
- */
-export const updateCurriculum = async (id, curriculumData) => {
-    try {
-        const response = await api.put(`/api/curriculums/${id}`, curriculumData)
-        console.log('Updated Curriculum:', response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error updating curriculum ID ${id}:`, error)
-        throw error
-    }
-}
-
-/**
- * Delete a curriculum
- */
-export const deleteCurriculum = async (id) => {
-    try {
-        const response = await api.delete(`/api/curriculums/${id}`)
-        console.log('Deleted Curriculum:', response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error deleting curriculum ID ${id}:`, error)
-        throw error
-    }
-}
-
-/**
- * Fetch curriculums by course ID
- */
-export const fetchCurriculumsByCourse = async (courseId) => {
-    try {
-        const response = await api.get(`/api/curriculums/course/${courseId}`)
-        console.log(`Fetched Curriculums for Course ${courseId}:`, response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error fetching curriculums for course ID ${courseId}:`, error)
-        throw error
-    }
-}
-
-export const newAdvising = async (curriculum_id) => {
-    try {
-        const response = await api.post(`/api/new-student/advising`, { curriculum_id })
-        console.log(`Store new advising:`, response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error storing advising`, error)
-        throw error
-    }
-}
-
-// src/services/subjectService.js
-/**
- * Fetch all subjects
- */
-export const fetchAllSubjects = async () => {
-    try {
-        const response = await api.get('/api/subjects')
-        console.log('Fetched Subjects:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error fetching subjects:', error)
-        throw error
-    }
-}
-
-/**
- * Fetch subjects by curriculum ID
- */
-export const fetchSubjectsByCurriculum = async (curriculumId) => {
-    try {
-        const response = await api.get(`/api/curriculums/${curriculumId}/subjects`)
-        console.log(`Fetched Subjects for Curriculum ${curriculumId}:`, response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error fetching subjects for curriculum ID ${curriculumId}:`, error)
-        throw error
-    }
-}
-
-/**
- * Create a new subject
- */
-export const createSubject = async (subjectData) => {
-    try {
-        const response = await api.post('/api/subjects', subjectData)
-        console.log('Created Subject:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error creating subject:', error)
-        throw error
-    }
-}
-
-/**
- * Update an existing subject
- */
-export const updateSubject = async (id, subjectData) => {
-    try {
-        const response = await api.put(`/api/subjects/${id}`, subjectData)
-        console.log('Updated Subject:', response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error updating subject ID ${id}:`, error)
-        throw error
-    }
-}
-
-/**
- * Delete a subject
- */
-export const deleteSubject = async (id) => {
-    try {
-        const response = await api.delete(`/api/subjects/${id}`)
-        console.log('Deleted Subject:', response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error deleting subject ID ${id}:`, error)
-        throw error
-    }
-}
-
-/**
- * Fetch prerequisites of a subject (recursive chain)
- */
-export const fetchSubjectPrerequisites = async (id) => {
-    try {
-        const response = await api.get(`/api/subjects/${id}/prerequisites`)
-        console.log(`Fetched Prerequisites for Subject ${id}:`, response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error fetching prerequisites for subject ID ${id}:`, error)
-        throw error
-    }
-}
-
-
-
-/**
- * POST GRADES
- */
-export const saveGrades = async (id, grades, user_id) => {
-    try {
-        const response = await api.post(`/api/grades`, {
-            tor_id: id,
-            grades: grades
-        }, {
-            timeout: 120000 // ⏳ 120 seconds for OCR requests
-        });
-        console.log(`Processed grades ${id}:`, response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error to process grades ${id}:`, error)
-        throw error
-    }
-}
-
-
-/**
- * Fetch prerequisites of a subject (recursive chain)
- */
-export const Tesseract = async (id, curriculum_id) => {
-    try {
-        const response = await api.post(`/api/process-tor/${id}/${curriculum_id}`, {}, {
-            timeout: 0 // ⏳ 120 seconds for OCR requests
-        });
-        console.log(`Processed tor ${id}:`, response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error to process tor ${id}:`, error)
-        throw error
-    }
-}
-
-
-// 📬 Get all notifications
-export const fetchAllNotifications = async () => {
-    try {
-        const response = await api.get('/api/notifications')
-        console.log('All Notifications:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error fetching all notifications:', error)
-        throw error
-    }
-}
-
-// 🔔 Get only unread notifications
-export const fetchUnreadNotifications = async () => {
-    try {
-        const response = await api.get('/api/notifications/unread')
-        console.log('Unread Notifications:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error fetching unread notifications:', error)
-        throw error
-    }
-}
-
-// ✅ Mark a single notification as read
-export const markNotificationAsRead = async (id) => {
-    try {
-        const response = await api.post(`/api/notifications/${id}/read`)
-        console.log(`Notification ${id} marked as read:`, response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error marking notification ${id} as read:`, error)
-        throw error
-    }
-}
-
-// 🧹 Mark all notifications as read
-export const markAllNotificationsAsRead = async () => {
-    try {
-        const response = await api.post('/api/notifications/read-all')
-        console.log('All notifications marked as read:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('Error marking all notifications as read:', error)
-        throw error
-    }
-}
-
-// reprots or summary
-//
-export const fetchStudentSummary = async () => {
-    try {
-        const response = await api.get(`/api/student/summary`)
-        console.log('Student Summary:', response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error fetching student summary:`, error)
-        throw error
-    }
-}
-
-
-export const fetchAdminSummary = async () => {
-    try {
-        const response = await api.get(`/api/admin/summary`)
-        console.log('Admin Summary:', response.data)
-        return response.data
-    } catch (error) {
-        console.error(`Error fetching admin summary:`, error)
-        throw error
-    }
-}
-
-
-export default api
+export default api;

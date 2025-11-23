@@ -6,25 +6,34 @@
         <h1 class="text-2xl font-semibold text-gray-800">Student Management</h1>
         <p class="text-sm text-gray-500">Manage and track all students.</p>
       </div>
-      <button @click="openModal()"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition">
+      <button
+        @click="openModal()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition"
+      >
         + Add Student
       </button>
     </div>
-
     <!-- Search & Filters -->
     <div class="flex flex-wrap items-center gap-3 mb-6">
-      <input v-model="search" type="text" placeholder="Search student name..."
-        class="border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-1/3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      <select v-model="filterType"
-        class="border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-40 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <input
+        v-model="search"
+        type="text"
+        placeholder="Search student name..."
+        class="border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-1/3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <select
+        v-model="filterType"
+        class="border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
         <option value="">All Types</option>
         <option value="New">New</option>
         <option value="Shiftee">Shiftee</option>
         <option value="Transferee">Transferee</option>
       </select>
-      <select v-model="filterYear"
-        class="border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-40 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <select
+        v-model="filterYear"
+        class="border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
         <option value="">All Years</option>
         <option v-for="year in yearLevels" :key="year" :value="year">
           {{
@@ -39,11 +48,10 @@
                     : year
           }}
         </option>
-
       </select>
     </div>
 
-    <!-- Student Table -->
+    <!-- Table -->
     <div class="bg-white rounded-2xl shadow-sm p-4 overflow-x-auto">
       <div v-if="isLoadingUsers" class="mt-4">
         <TableLoader :rows="6" />
@@ -63,18 +71,21 @@
               <th class="px-4 py-3">Status</th>
               <th class="px-4 py-3">Is Active</th>
               <th class="px-4 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="student in paginatedStudents" :key="student.id"
-              class="border-b border-slate-200 hover:bg-gray-50 transition">
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+              v-for="student in paginatedStudents"
+              :key="student.id"
+              class="border-b border-slate-200 hover:bg-gray-50 transition"
+            >
               <td class="px-4 py-3">{{ student.student_id || '__' }}</td>
               <td class="px-4 py-3">{{ student.first_name || '__' }}</td>
               <td class="px-4 py-3">{{ student.last_name || '__' }}</td>
               <td class="px-4 py-3">{{ student.email || '__' }}</td>
               <td class="px-4 py-3">{{ student.category || '__' }}</td>
               <td class="px-4 py-3">
-                {{
+                                {{
                   student.year_level == 1
                     ? '1st Year'
                     : student.year_level == 2
@@ -86,51 +97,68 @@
                           : '__'
                 }}
               </td>
-              <td class="px-4 py-3">{{ student.type || __ }}</td>
+              <td class="px-4 py-3">{{ student.type || '__' }}</td>
               <td class="px-4 py-3">{{ student.status || 'Pending' }}</td>
               <td class="px-4 py-3">{{ student.is_deleted === 0 ? 'Active' : 'Inactive' }}</td>
               <td class="px-4 py-3 text-right space-x-2">
-                <button @click="openModal(student)" class="text-blue-600 hover:underline cursor-pointer">
+                <button
+                  @click="openModal(student)"
+                  class="text-blue-600 hover:underline cursor-pointer"
+                >
                   Edit
                 </button>
-                <button @click="toggleActiveStatus(student)"
-                  class="text-red-600 hover:underline cursor-pointer">
+                <button
+                  @click="toggleActiveStatus(student)"
+                  class="text-red-600 hover:underline cursor-pointer"
+                >
                   {{ student.is_deleted ? 'Activate' : 'Deactivate' }}
                 </button>
               </td>
             </tr>
 
             <tr v-if="!filteredStudents.length">
-              <td colspan="7" class="text-center py-6 text-gray-400">
+              <td colspan="10" class="text-center py-6 text-gray-400">
                 No students found.
               </td>
             </tr>
           </tbody>
         </table>
-
-        <!-- Pagination Controls -->
-        <div v-if="totalPages > 1" class="flex justify-between items-center mt-4 px-2 text-sm text-gray-700">
+ <!-- Pagination Controls -->
+        <div
+          v-if="totalPages > 1"
+          class="flex justify-between items-center mt-4 px-2 text-sm text-gray-700"
+        >
           <span>
-            Showing
-            <b>{{ startItem }}</b> - <b>{{ endItem }}</b> of
+            Showing <b>{{ startItem }}</b> - <b>{{ endItem }}</b> of
             <b>{{ filteredStudents.length }}</b>
           </span>
 
           <div class="flex space-x-2">
-            <button @click="prevPage" :disabled="currentPage === 1"
-              class="px-3 py-1 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50">
+            <button
+              @click="prevPage"
+              :disabled="currentPage === 1"
+              class="px-3 py-1 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50"
+            >
               Prev
             </button>
-            <button v-for="page in totalPages" :key="page" @click="goToPage(page)" :class="[
-              'px-3 py-1 rounded-lg border',
-              currentPage === page
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white hover:bg-gray-100 border-gray-300'
-            ]">
+            <button
+              v-for="page in totalPages"
+              :key="page"
+              @click="goToPage(page)"
+              :class="[
+                'px-3 py-1 rounded-lg border',
+                currentPage === page
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white hover:bg-gray-100 border-gray-300',
+              ]"
+            >
               {{ page }}
             </button>
-            <button @click="nextPage" :disabled="currentPage === totalPages"
-              class="px-3 py-1 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50">
+            <button
+              @click="nextPage"
+              :disabled="currentPage === totalPages"
+              class="px-3 py-1 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50"
+            >
               Next
             </button>
           </div>
@@ -153,17 +181,14 @@
           <label class="block text-xs text-gray-600 mb-1">First Name</label>
           <input v-model="form.first_name" type="text" class="input" placeholder="Enter first name" required />
         </div>
-
         <div>
           <label class="block text-xs text-gray-600 mb-1">Last Name</label>
           <input v-model="form.last_name" type="text" class="input" placeholder="Enter last name" required />
         </div>
-
         <div>
           <label class="block text-xs text-gray-600 mb-1">Email</label>
           <input v-model="form.email" type="email" class="input" placeholder="Enter email" required />
         </div>
-
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs text-gray-600 mb-1">Category</label>
@@ -174,23 +199,22 @@
               <option value="Shiftee">Shiftee</option>
             </select>
           </div>
-
           <div>
             <label class="block text-xs text-gray-600 mb-1">Status</label>
             <select v-model="form.status" class="input" required>
-              <option value="pending">Pending</option>
-              <option value="enrolled">Enrolled</option>
-              <option value="rejected">Rejected</option>
+              <option value="Pending">Pending</option>
+              <option value="Enrolled">Enrolled</option>
+              <option value="Rejected">Rejected</option>
             </select>
           </div>
         </div>
         <div>
           <label class="block text-xs text-gray-600 mb-1">Year Level</label>
           <select v-model="form.year_level" class="input" required>
-            <option value="1">1st Year </option>
-            <option value="2">2nd Year </option>
-            <option value="3">3rd Year </option>
-            <option value="4">4th Year </option>
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3">3rd Year</option>
+            <option value="4">4th Year</option>
           </select>
         </div>
 
@@ -206,18 +230,16 @@
     </ModalOverlay>
   </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { fetchUsers, saveUpdateUsers, toggleActiveUser } from "@/services/apiService";
+import { fetchUsers } from "@/services/apiService";
 import TableLoader from "@/components/TableLoader.vue";
 import ModalOverlay from "@/components/ModalOverlay.vue";
 import { useToast } from "vue-toastification";
 
-const toast = useToast();
 const isLoadingUsers = ref(false);
 const students = ref([]);
-
+const currentUser = ref(JSON.parse(localStorage.getItem("user")) || {});
 const search = ref("");
 const filterType = ref("");
 const filterYear = ref("");
@@ -237,20 +259,21 @@ const form = ref({
   year: "",
 });
 
+
 // Pagination
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 
-// ✅ Flatten data when fetching
 const loadUsers = async () => {
   isLoadingUsers.value = true;
   try {
     const response = await fetchUsers();
-    students.value = response.map((s) => ({
-      ...s,
-      category: s.other_info?.category || null,
-      status: s.other_info?.status || "Pending",
-    }));
+    console.log("All Users:", response);
+
+    const adminCourse = currentUser.value?.course?.toLowerCase() || "";
+    students.value = response.filter((s) =>
+      (s.course || "").toLowerCase() === adminCourse && s.role === "user"
+    );
   } catch (error) {
     console.error("Error fetching users:", error);
   } finally {
@@ -280,8 +303,6 @@ const toggleActiveStatus = async (student) => {
     toast.error("Failed to update student status.");
   }
 };
-
-
 
 // Filters
 const filteredStudents = computed(() => {

@@ -1,47 +1,22 @@
 <template>
     <div>
         <h2 class="text-2xl font-semibold text-gray-800 my-4">
-            Upload Transcript of Records
+            Uploaded Transcript of Records
+            <p class="text-sm text-gray-500">Manage and view all uploaded Transcript.</p>
         </h2>
 
-        <!-- Curriculum Filter -->
-        <div class="relative w-full mb-4">
-            <div class="border rounded-lg p-2 flex items-center justify-between bg-white cursor-pointer"
-                @click="showCurriculumDropdown = !showCurriculumDropdown">
-                <span class="text-gray-700 text-sm">
-                    {{ selectedCurriculum
-                        ? `${selectedCurriculum.course?.name} (${selectedCurriculum.year_start} -
-                    ${selectedCurriculum.year_end})`
-                        : 'Select Curriculum'
-                    }}
-                </span>
-                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-            </div>
 
-            <!-- Dropdown -->
-            <div v-if="showCurriculumDropdown"
-                class="absolute mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                <input v-model="curriculumSearch" type="text" placeholder="Search curriculum..."
-                    class="w-full px-3 py-2 border-b border-gray-200 text-xs focus:outline-none" />
-                <ul class="max-h-56 overflow-y-auto">
-                    <li v-for="curriculum in filteredCurriculums" :key="curriculum.id"
-                        @click="selectCurriculum(curriculum)" class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm">
-                        {{ curriculum.course?.name }} ({{ curriculum.year_start }} - {{ curriculum.year_end }})
-                    </li>
-                    <li v-if="!filteredCurriculums.length" class="px-3 py-2 text-gray-400 text-sm">
-                        No results found.
-                    </li>
-                </ul>
-            </div>
-        </div>
+<!-- 🔍 TOR Search + Status Filter -->
+<div class="flex flex-wrap items-center gap-2 mb-4">
+    <input v-model="searchQuery" type="text" placeholder="Search by TOR ID, Student ID, or Student Name..."
+        class="w-full md:w-1/2 px-3 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none" />
 
-        <!-- 🔍 TOR Search -->
-        <div class="flex flex-wrap items-center gap-2 mb-4">
-            <input v-model="searchQuery" type="text" placeholder="Search by TOR ID, Student ID, or Student Name..."
-                class="w-full md:w-1/2 px-3 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none" />
-        </div>
+    <select v-model="statusFilter" class="px-3 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none">
+        <option value="submitted">Submitted</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+    </select>
+</div>
 
         <!-- Table -->
         <div class="bg-white rounded-lg hover:shadow-md duration-200 p-6">
@@ -152,6 +127,7 @@
 </template>
 
 <script setup>
+const statusFilter = ref('submitted') // ✅ default to pending
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { fetchAllTors, fetchMyTors, fetchAllCurriculums, approveTor, fetchSubjectsByCurriculum } from '@/services/apiService'
 import { useAuthStore } from '@/stores/auth'
@@ -188,20 +164,38 @@ const getCreditedSummary = (grades) => {
 const filteredTors = computed(() => {
     let result = torsData.value
 
-    if (selectedCurriculum.value) {
-        result = result.filter(t => t.curriculum_id === selectedCurriculum.value.id)
+    // 🔹 Filter by admin course if admin
+    if (auth.user.role === 'admin') {
+        const adminCourseCode = auth.user.course?.code || auth.user.course || ''
+        result = result.filter(t => {
+            const curriculum = t.curriculum || curriculums.value.find(c => c.id === t.curriculum_id)
+            const courseCode = curriculum?.course?.code || curriculum?.course || ''
+            return courseCode.toLowerCase() === adminCourseCode.toLowerCase()
+        })
     }
 
-    if (searchQuery.value.trim()) {
-        const query = searchQuery.value.toLowerCase()
+    // 🔹 Filter by status
+    if (statusFilter.value) {
+        result = result.filter(t => {
+            // Map "pending" to your actual field if needed (example: 'submitted' means processing)
+            if (statusFilter.value === 'pending') return t.status === 'submitted' || t.status === 'processing'
+            return t.status === statusFilter.value
+        })
+    }
+
+    // 🔹 Filter by search query
+    if (searchQuery.value) {
+        const q = searchQuery.value.toLowerCase()
         result = result.filter(t =>
-            t.id.toString().includes(query) ||
-            `${t.user?.first_name} ${t.user?.last_name}`.toLowerCase().includes(query)
+            String(t.id).includes(q) ||
+            String(t.user.student_id).includes(q) ||
+            `${t.user.first_name} ${t.user.last_name}`.toLowerCase().includes(q)
         )
     }
 
     return result
 })
+
 
 // Pagination
 const totalPages = computed(() => Math.ceil(filteredTors.value.length / perPage))
@@ -220,10 +214,20 @@ const getUploadedTor = async () => {
     try {
         const response = auth.user.role === 'admin' ? await fetchAllTors() : await fetchMyTors()
         torsData.value = response
+
+        // 🔹 Debug admin course
+        if (auth.user.role === 'admin') {
+            console.log('🟦 Admin User:', auth.user)
+            console.log('🟦 Admin Course Object:', auth.user.course)
+        }
+
+        console.log('SAMPLE TOR DATA:', response[0])
     } catch (error) {
         console.error('Error fetching uploaded TOR:', error)
     }
 }
+
+
 
 const getCurriculums = async () => {
     try {

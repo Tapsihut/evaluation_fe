@@ -36,6 +36,7 @@ const router = createRouter({
         { path: 'upload-tor', name: 'StudentUploadTor', component: () => import('@/views/student/StudentUploadTor.vue') },
         { path: 'dashboard', name: 'StudentDashboard', component: () => import('@/views/student/StudentDashboard.vue') },
         { path: 'advising', name: 'StudentAdvising', component: () => import('@/views/student/StudentAdvising.vue') },
+        { path: 'prospectus', name: 'StudentProspectus',component: () => import('@/views/student/ProspectusView.vue') },
         { path: 'profile', name: 'StudentProfile', component: () => import('@/views/Profile.vue') },
         { path: 'view-tor', name: 'StudentViewTor', component: () => import('@/views/ViewTor.vue') },
 

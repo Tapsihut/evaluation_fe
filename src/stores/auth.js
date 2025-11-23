@@ -3,10 +3,23 @@ import axios from 'axios'
 import { useToast } from 'vue-toastification'
 
 export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    token: localStorage.getItem('token') || null,
-    user: JSON.parse(localStorage.getItem('user')) || null,
-  }),
+  state: () => {
+    let parsedUser = null
+    try {
+      const rawUser = localStorage.getItem('user')
+      if (rawUser && rawUser !== 'undefined' && rawUser !== 'null') {
+        parsedUser = JSON.parse(rawUser)
+      }
+    } catch (e) {
+      console.warn('Invalid user data in localStorage:', e)
+      localStorage.removeItem('user')
+    }
+
+    return {
+      token: localStorage.getItem('token') || null,
+      user: parsedUser,
+    }
+  },
 
   actions: {
     async login({ email, password, role }) {
@@ -16,7 +29,7 @@ export const useAuthStore = defineStore('auth', {
         this.token = res.data.token
         this.user = res.data.user
 
-        // persist
+        // ✅ Persist valid data
         localStorage.setItem('token', this.token)
         localStorage.setItem('user', JSON.stringify(this.user))
 
@@ -26,39 +39,34 @@ export const useAuthStore = defineStore('auth', {
         return { success: false, message: err.response?.data?.message || 'Login failed' }
       }
     },
+
     async register({ first_name, last_name, email, password }) {
       try {
         const res = await axios.post('/api/register', { first_name, last_name, email, password })
-
-        // this.token = res.data.token
-        // this.user = res.data.user
-
-        // // persist
-        // localStorage.setItem('token', this.token)
-        // localStorage.setItem('user', JSON.stringify(this.user))
-
         return { success: true, data: res.data }
       } catch (err) {
         console.error(err)
-        return { success: false, message: err.response?.data?.message || 'Login failed' }
+        return { success: false, message: err.response?.data?.message || 'Registration failed' }
       }
     },
 
     logout() {
-      const toast = useToast();
+      const toast = useToast()
       this.token = null
       this.user = null
       localStorage.removeItem('token')
       localStorage.removeItem('user')
-      toast.error("Logged out successfully.");
-      window.location.href = '/'  // Redirect to landing page after logout
+      toast.error('Logged out successfully.')
+      window.location.href = '/' // Redirect to landing page
     },
+
     // ✅ Setter for user.other_info
     setOtherInfo(newInfo) {
       if (!this.user) this.user = {}
       this.user.other_info = newInfo
 
       // Persist updated user in localStorage
+      localStorage.setItem('user', JSON.stringify(this.user))
     },
-  }
+  },
 })

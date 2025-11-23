@@ -8,34 +8,46 @@
 
     <!-- Navigation Links -->
     <nav class="flex-1 px-4 py-6 space-y-2">
-      <RouterLink to="/student/dashboard"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 transition" active-class="bg-slate-700">
-        <span>🏠</span> Dashboard
-      </RouterLink>
-
-      <RouterLink to="/student/upload-tor"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 transition" active-class="bg-slate-700">
-        <span>⬆️</span> {{isNewStudent ? 'Request Advising' : 'Upload TOR'}}
-      </RouterLink>
-
-      <RouterLink to="/student/profile"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 transition" active-class="bg-slate-700">
-        <span>👤</span> Profile
-      </RouterLink>
-
-      <!-- <RouterLink
-        to="/settings"
+      <RouterLink
+        to="/student/dashboard"
         class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 transition"
         active-class="bg-slate-700"
       >
-        <span>⚙️</span> Settings
-      </RouterLink> -->
+        <span>🏠</span> Dashboard
+      </RouterLink>
+
+      <RouterLink
+        to="/student/upload-tor"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 transition"
+        active-class="bg-slate-700"
+      >
+        <span>⬆️</span> {{ isNewStudent ? 'Request Advising' : 'Upload TOR' }}
+      </RouterLink>
+
+      <!-- ✅ New Prospectus Navigation -->
+      <RouterLink
+        to="/student/prospectus"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 transition"
+        active-class="bg-slate-700"
+      >
+        <span>📘</span> Prospectus
+      </RouterLink>
+
+      <RouterLink
+        to="/student/profile"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 transition"
+        active-class="bg-slate-700"
+      >
+        <span>👤</span> Profile
+      </RouterLink>
     </nav>
 
     <!-- Logout -->
     <div class="px-4 py-4 border-t border-slate-700">
-      <button class="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-slate-700 transition cursor-pointer"
-        @click="authStore.logout()">
+      <button
+        class="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-slate-700 transition cursor-pointer"
+        @click="authStore.logout()"
+      >
         <span>↩️</span> Logout
       </button>
     </div>
@@ -43,21 +55,15 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { RouterLink } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
+import { computed, ref } from 'vue'
+import { useRoute, RouterLink } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
-const authStore = useAuthStore();
-const route = useRoute();
+const authStore = useAuthStore()
+const route = useRoute()
 const user = ref(authStore.user)
 
-const isNewStudent = computed(() => authStore.user.other_info?.category === 'New' || null)
-
-const notificationCount = ref(3)
-
-// watch(() => authStore.user?.other_info, () => {
-//   alert(authStore.user?.other_info?.category)
-// })
-
+const isNewStudent = computed(() =>
+  authStore.user.other_info?.category === 'New' || null
+)
 </script>
