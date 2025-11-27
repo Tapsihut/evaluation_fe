@@ -1,13 +1,10 @@
 <template>
-  
-
   <div class="p-4">
     <!-- Loading -->
-            <div v-if="loading" class="text-center py-20 text-gray-500">
-            <div class="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
-            <p>Loading student prospectus data...</p>
-        </div>
-
+    <div v-if="loading" class="text-center py-20 text-gray-500">
+      <div class="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+      <p>Loading prospectus data...</p>
+    </div>
 
     <!-- Error -->
     <div v-else-if="error" class="text-center text-red-500">{{ error }}</div>
@@ -34,37 +31,31 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import ProspectusTable from '@/components/ProspectusTable.vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 // Router
 const router = useRouter();
+const route = useRoute();
 
-// Get logged-in user
-const user = JSON.parse(localStorage.getItem('user') || 'null');
-if (!user || !user.id) {
-  alert('User not logged in or missing ID.');
+// Accept userId from route (for admin) or fallback to logged-in user
+const userId = ref(route.params.userId || JSON.parse(localStorage.getItem('user') || '{}')?.id);
+if (!userId.value) {
+  alert('User ID is missing.');
   router.push('/');
 }
-
-const studentId = ref(user.id);
 
 const subjects = ref([]);
 const curriculum = ref(null);
 const loading = ref(true);
 const error = ref('');
 
+// Fetch prospectus for a given userId
 const fetchProspectus = async () => {
-  if (!studentId.value) {
-    error.value = 'Student ID is missing';
-    loading.value = false;
-    return;
-  }
-
   loading.value = true;
   error.value = '';
 
   try {
-    const response = await axios.get(`/api/student/${studentId.value}/subjects`, {
+    const response = await axios.get(`/api/student/${userId.value}/subjects`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     });
 

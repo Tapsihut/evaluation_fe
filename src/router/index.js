@@ -25,6 +25,12 @@ const router = createRouter({
         { path: 'profile', name: 'AdminProfile', component: () => import('@/views/Profile.vue') },
         { path: 'curriculum', name: 'AdminCurriculum', component: () => import('@/views/admin/Curriculum.vue') },
         { path: 'view-tor', name: 'AdminViewTor', component: () => import('@/views/ViewTor.vue') },
+        { path: '/admin/prospectus/:userId', name: 'ProspectusView',component: () => import('@/views/admin/ProspectusView.vue'),props: route => ({
+    userId: route.params.userId,
+    programName: route.query.programName
+  })
+}
+
       ]
     },
 

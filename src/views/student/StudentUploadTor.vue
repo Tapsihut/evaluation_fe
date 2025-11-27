@@ -246,22 +246,6 @@ const selectCurriculum = async (curriculum) => {
     showCurriculumDropdown.value = false
 }
 
-// // Merge credited info from torGrades into curriculum subjects
-// const creditedCurriculumSubjects = computed(() => {
-//   return curriculumSubjects.value.map(sub => {
-//     const creditedInfo = torGrades.value.find(
-//       t => t.is_credited && Number(t.credited_id) === Number(sub.id)
-//     )
-//     return {
-//       ...sub,
-//       credited: !!creditedInfo,
-//       grade: creditedInfo?.grade || null,
-//       extracted_code: creditedInfo?.extracted_code || null,
-//       extracted_title: creditedInfo?.title || null,
-//     }
-//   })
-// })
-
 // Fetch curriculums
 async function getcurriculums() {
     try {

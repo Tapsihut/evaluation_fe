@@ -25,14 +25,14 @@
             <table class="min-w-full border border-slate-200 text-xs text-gray-700">
                 <thead class="bg-gray-100 text-gray-800">
                     <tr>
-                        <th class="border border-slate-200 px-4 py-2 text-left">ID</th>
-                        <th class="border border-slate-200 px-4 py-2 text-left">Category</th>
-                        <th class="border border-slate-200 px-4 py-2 text-left">Curriculum</th>
-                        <th class="border border-slate-200 px-4 py-2 text-left">Student ID</th>
-                        <th class="border border-slate-200 px-4 py-2 text-left">Uploaded By</th>
-                        <th class="border border-slate-200 px-4 py-2 text-left">Subjects</th>
-                        <th class="border border-slate-200 px-4 py-2 text-left">Status</th>
-                        <th class="border border-slate-200 px-4 py-2 text-left">Actions</th>
+                        <th class="border border-slate-200 px-4 py-2 text-center">ID</th>
+                        <th class="border border-slate-200 px-4 py-2 text-center">Category</th>
+                        <th class="border border-slate-200 px-4 py-2 text-center">Course</th>
+                        <th class="border border-slate-200 px-4 py-2 text-center">Student ID</th>
+                        <th class="border border-slate-200 px-7 py-2 text-center">Uploaded By</th>
+                        <th class="border border-slate-200 px-4 py-2 text-center">No. of Credited</th>
+                        <th class="border border-slate-200 px-4 py-2 text-center">Status</th>
+                        <th class="border border-slate-200 px-4 py-2 text-center">Actions</th>
                     </tr>
                 </thead>
 
@@ -83,6 +83,10 @@
                             </span>
                         </td>
                         <td class="flex items-center border border-slate-200 px-4 py-2 space-x-2 text-xs">
+                            <button @click="openDetails(tor)"
+                                class="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 cursor-pointer">
+                                View Details
+                            </button>
                             <button v-if="tor.status === 'approved' && tor.user.other_info?.category !== 'New'" @click="printForCredited(tor)" class="inline-flex items-center px-2 py-1 rounded shadow-md transition-all duration-200
                             cursor-pointer
                             text-white
@@ -93,11 +97,21 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 9V2h12v7m-6 4h6m-6 4h6M6 20h12v-6H6v6z" />
                                 </svg>
-                                <span>PRINT</span>
+                                <span>PRINT CREDITED</span>
                             </button>
-                            <button @click="openDetails(tor)"
-                                class="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 cursor-pointer">
-                                View Details
+                            <button
+                            v-if="tor.status === 'approved' && tor.user.other_info?.category !== 'New'"
+                            @click="goToProspectus(tor)"
+                            class="inline-flex items-center px-2 py-1 rounded shadow-md transition-all duration-200
+                                    cursor-pointer text-white disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-400
+                                    bg-indigo-600 hover:bg-indigo-700"
+                            >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 9V2h12v7m-6 4h6m-6 4h6M6 20h12v-6H6v6z" />
+                            </svg>
+                            <span>PRINT PROSPECTUS</span>
                             </button>
                         </td>
                     </tr>
@@ -150,6 +164,14 @@ const showCurriculumDropdown = ref(false)
 const searchQuery = ref(route.query.tor || '')
 const currentPage = ref(1)
 const perPage = 8;
+
+function goToProspectus(tor) {
+  const programName = tor.program_name || '';
+  const url = `/admin/prospectus/${tor.user.id}?programName=${encodeURIComponent(programName)}`;
+  window.open(url, '_blank'); // opens in a new tab
+}
+
+
 const isNewStudent = (data) => {
     return data.user.other_info.category === 'New'
 }

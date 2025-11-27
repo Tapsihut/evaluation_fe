@@ -83,7 +83,7 @@ import { computed } from 'vue';
 const props = defineProps({
   subjects: { type: Array, default: () => [] },
   programName: { type: String, default: '' },
-  logoUrl: { type: String, default: '/assets/logo.png' }
+  logoUrl: { type: String, default: '/assets/asscat-logo.jpg' }
 });
 
 const groupedSubjects = computed(() => {
