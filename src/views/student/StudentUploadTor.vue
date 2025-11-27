@@ -20,7 +20,7 @@
                 <ul class="max-h-56 overflow-y-auto">
                     <li v-for="curriculum in filteredCurriculums" :key="curriculum.id"
                         @click="selectCurriculum(curriculum)" class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm">
-                        {{ curriculum.course?.name }} ({{ curriculum.year_start }} - {{ curriculum.year_end }})
+                        {{ curriculum.course?.name }} ({{ curriculum.course?.code }})
                     </li>
                     <li v-if="!filteredCurriculums.length" class="px-3 py-2 text-gray-400 text-sm">No results found.
                     </li>
